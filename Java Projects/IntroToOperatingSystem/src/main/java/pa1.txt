@@ -10,6 +10,6 @@ Execution: it will run the given task in parallel with other threads or can wait
 Termination: The treads ends here and all the execution have been completed.
 
 TASK 5
-In terms of time, there is not much difference and both completes at about the same amount of time.
+In terms of time, there is not much difference and both completes at about the same amount of time but sync method is a little faster.
 Since sync. method disables interrupt for the entire method compared sync. block where you can have control
 of the specific code you want to disable interrupt.
