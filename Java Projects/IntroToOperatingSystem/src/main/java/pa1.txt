@@ -1,0 +1,15 @@
+TASK 1
+In the critical section of the code where the important information (like the balance) is
+being moved from the main memory to the processor and not being updated before the
+critical section is complete.
+
+TASK 2
+Since we are not synchronised, we are using threads and start does not guarantee the order then all will be executed concurrently.
+Creation: when 'new' is invoked, a thread is created and stays in that states until something else happens
+Execution: it will run the given task in parallel with other threads or can wait to be executed.
+Termination: The treads ends here and all the execution have been completed.
+
+TASK 5
+In terms of time, there is not much difference and both completes at about the same amount of time.
+Since sync. method disables interrupt for the entire method compared sync. block where you can have control
+of the specific code you want to disable interrupt.
