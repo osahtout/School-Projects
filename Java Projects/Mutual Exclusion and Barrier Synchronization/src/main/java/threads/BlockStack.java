@@ -14,6 +14,8 @@ package threads;
 class BlockStack
 {
 
+	public static int stackAccessCounter = 0;
+
 	public static final int MAX_SIZE = 28; /** # of letters in the English alphabet + 2 */
 
 	public static final int DEFAULT_SIZE = 6; /** Default stack size*/
@@ -37,10 +39,7 @@ class BlockStack
 		return iTop;
 	}
 
-	public int getAccessCounter() //TODO
-	{
-		return 0;
-	}
+	public int getAccessCounter() { return stackAccessCounter; }
 
 
 	public boolean isEmpty()
@@ -85,6 +84,7 @@ class BlockStack
 	 */
 	public char pick()
 	{
+		stackAccessCounter++;
 		return this.acStack[this.iTop];
 	}
 
@@ -94,6 +94,7 @@ class BlockStack
 	 */
 	public char getAt(final int piPosition)
 	{
+		stackAccessCounter++;
 		return this.acStack[piPosition];
 	}
 
@@ -102,6 +103,7 @@ class BlockStack
 	 */
 	public void push(final char pcBlock)
 	{
+		stackAccessCounter++;
 		this.acStack[++this.iTop] = pcBlock;
 	}
 
@@ -113,6 +115,7 @@ class BlockStack
 	{
 		char cBlock = this.acStack[this.iTop];
 		this.acStack[this.iTop--] = '$'; // Leave prev. value undefined
+		stackAccessCounter++;
 		return cBlock;
 	}
 }
