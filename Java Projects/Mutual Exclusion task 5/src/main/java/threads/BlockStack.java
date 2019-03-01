@@ -44,7 +44,7 @@ class BlockStack
 
 	public boolean isEmpty()
 	{
-		return this.topOfStack == '*';
+		return this.topOfStack == -1;
 	} //TODO
 
 
@@ -82,11 +82,8 @@ class BlockStack
 	 * Picks a value from the top without modifying the stack
 	 * @return top element of the stack, char
 	 */
-	public char pick() throws emptyStackException
+	public char pick()
 	{
-		if(this.charStack[0] == '*')
-			throw new emptyStackException("stack is EMPTY");
-
 		stackAccessCounter++;
 		return this.charStack[this.topOfStack];
 	}

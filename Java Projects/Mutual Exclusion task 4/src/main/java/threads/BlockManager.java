@@ -177,17 +177,17 @@ public class BlockManager
 		{
 
 
-
+			mutex.Wait();
 
 			System.out.println("AcquireBlock thread [TID=" + this.iTID + "] starts executing.");
 
 
 			phase1();
-			phase1.Signal();
+
 
 			try
 			{
-				mutex.Wait();
+
 
 
 				System.out.println("AcquireBlock thread [TID=" + this.iTID + "] requests Ms block.");
@@ -219,13 +219,15 @@ public class BlockManager
 				System.exit(1);
 			}
 			mutex.Signal();
-
+			phase1.Signal();
 
 
 
 			phase1.Wait();
-			phase2();
 			phase1.Signal();
+
+			phase2();
+
 
 			System.out.println("AcquireBlock thread [TID=" + this.iTID + "] terminates.");
 
@@ -247,17 +249,17 @@ public class BlockManager
 		public void run()
 		{
 
-
+			mutex.Wait();
 
 			System.out.println("ReleaseBlock thread [TID=" + this.iTID + "] starts executing.");
 
 
 			phase1();
-			phase1.Signal();
+
 
 			try
 			{
-				mutex.Wait();
+
 
 				if(!soStack.isEmpty())
 					this.cBlock = (char)(soStack.pick() + 1);
@@ -297,12 +299,13 @@ public class BlockManager
 			}
 			mutex.Signal();
 
-
+			phase1.Signal();
 
 
 			phase1.Wait();
-			phase2();
 			phase1.Signal();
+			phase2();
+
 
 			System.out.println("ReleaseBlock thread [TID=" + this.iTID + "] terminates.");
 
@@ -322,16 +325,16 @@ public class BlockManager
 	{
 		public void run()
 		{
-
+			mutex.Wait();
 
 
 			phase1();
-			phase1.Signal();
+
 
 
 			try
 			{
-				mutex.Wait();
+
 
 				for(int i = 0; i < siThreadSteps; i++)
 				{
@@ -358,12 +361,14 @@ public class BlockManager
 			}
 			mutex.Signal();
 
-
+			phase1.Signal();
 
 
 			phase1.Wait();
-			phase2();
 			phase1.Signal();
+
+			phase2();
+
 
 
 		}
