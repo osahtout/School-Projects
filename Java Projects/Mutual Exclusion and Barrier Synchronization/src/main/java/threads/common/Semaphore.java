@@ -55,6 +55,10 @@ public class Semaphore
 		return (this.iValue <= 0);
 	}
 
+	public int getiValue()
+	{
+		return this.iValue;
+	}
 	/*
 	 * -----------------------------
 	 * Standard semaphore operations

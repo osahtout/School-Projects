@@ -1,5 +1,5 @@
 package threads;
-
+import threads.exceptions.*;
 /**
  * Class BlockStack
  * Implements character block stack and operations upon it.
@@ -14,29 +14,29 @@ package threads;
 class BlockStack
 {
 
-	public static int stackAccessCounter = 0;
+	private static int stackAccessCounter = 0;
 
 	public static final int MAX_SIZE = 28; /** # of letters in the English alphabet + 2 */
 
-	public static final int DEFAULT_SIZE = 6; /** Default stack size*/
+	private static final int DEFAULT_SIZE = 6; /** Default stack size*/
 
-	public int iSize = DEFAULT_SIZE; /** Current size of the stack */
+	private int sizeOfStack = DEFAULT_SIZE; /** Current size of the stack */
 
-	public int iTop  = 3; /** Current top of the stack */
+	private int topOfStack = 3; /** Current top of the stack */
 
-	public char acStack[] = new char[] {'a', 'b', 'c', 'd', '$', '$'}; /** stack[0:5] with four defined values */
+	private char[] charStack = new char[] {'a', 'b', 'c', 'd', '*', '*'}; /** stack[0:5] with four defined values */
 
 
 
 
 	public int getISize()
 	{
-		return iSize;
+		return sizeOfStack;
 	}
 
 	public int getITop()
 	{
-		return iTop;
+		return topOfStack;
 	}
 
 	public int getAccessCounter() { return stackAccessCounter; }
@@ -44,8 +44,8 @@ class BlockStack
 
 	public boolean isEmpty()
 	{
-		return this.iTop == -1;
-	}
+		return this.topOfStack == -1;
+	} //TODO
 
 
 	/**
@@ -64,17 +64,17 @@ class BlockStack
 
                 if(piSize != DEFAULT_SIZE)
 		{
-			this.acStack = new char[piSize];
+			this.charStack = new char[piSize];
 
 			// Fill in with letters of the alphabet and keep
 			// 2 free blocks
 			for(int i = 0; i < piSize - 2; i++)
-				this.acStack[i] = (char)('a' + i);
+				this.charStack[i] = (char)('a' + i);
 
-			this.acStack[piSize - 2] = this.acStack[piSize - 1] = '$';
+			this.charStack[piSize - 2] = this.charStack[piSize - 1] = '*';
 
-			this.iTop = piSize - 3;
-                        this.iSize = piSize;
+			this.topOfStack = piSize - 3;
+                        this.sizeOfStack = piSize;
 		}
 	}
 
@@ -85,7 +85,7 @@ class BlockStack
 	public char pick()
 	{
 		stackAccessCounter++;
-		return this.acStack[this.iTop];
+		return this.charStack[this.topOfStack];
 	}
 
 	/**
@@ -95,16 +95,27 @@ class BlockStack
 	public char getAt(final int piPosition)
 	{
 		stackAccessCounter++;
-		return this.acStack[piPosition];
+		return this.charStack[piPosition];
 	}
 
 	/**
 	 * Standard push operation
 	 */
-	public void push(final char pcBlock)
+	public void push(final char pcBlock) throws emptyStackException, fullStackException
 	{
 		stackAccessCounter++;
-		this.acStack[++this.iTop] = pcBlock;
+
+			if (this.charStack[0] == '*') {
+				this.charStack[0] = 'a';
+				throw new emptyStackException("Stack is EMPTY");
+			}
+
+			else if(this.charStack[charStack.length-1] != '*')
+				throw new fullStackException("Stack is FULL");
+			else {
+				this.charStack[++this.topOfStack] = pcBlock;
+				System.out.println(pcBlock + " has been successfully added to the stack");
+			}
 	}
 
 	/**
@@ -113,10 +124,23 @@ class BlockStack
 	 */
 	public char pop()
 	{
-		char cBlock = this.acStack[this.iTop];
-		this.acStack[this.iTop--] = '$'; // Leave prev. value undefined
 		stackAccessCounter++;
-		return cBlock;
+
+		try {
+			if(this.charStack[0] == '*')
+				throw new emptyStackException("stack is EMPTY");
+
+			char cBlock = this.charStack[this.topOfStack];
+			this.charStack[this.topOfStack--] = '*'; // Leave prev. value undefined
+
+			return cBlock;
+
+		}
+		catch (emptyStackException e)
+		{
+			System.out.println("Stack is empty, will return a *");
+			return '*';
+		}
 	}
 }
 

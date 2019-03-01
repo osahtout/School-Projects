@@ -2,6 +2,7 @@ package threads;
 
 // Import (aka include) some stuff.
 import threads.common.*;
+import threads.exceptions.*;
 
 /**
  * Class BlockManager
@@ -34,22 +35,22 @@ public class BlockManager
 	/**
 	 * For atomicity
 	 */
-	//private static Semaphore mutex = new Semaphore(...);
+	private static Semaphore mutex = new Semaphore(1);
 
 	/*
 	 * For synchronization
 	 */
 
 	/**
-	 * s1 is to make sure phase I for all is done before any phase II begins
+	 * phase1 is to make sure phase I for all is done before any phase II begins
 	 */
-	//private static Semaphore s1 = new Semaphore(...);
+	private static Semaphore phase1 = new Semaphore(-9);
 
 	/**
-	 * s2 is for use in conjunction with Thread.turnTestAndSet() for phase II proceed
+	 * phase2 is for use in conjunction with Thread.turnTestAndSet() for phase II proceed
 	 * in the thread creation order
 	 */
-	//private static Semaphore s2 = new Semaphore(...);
+	private static Semaphore phase2 = new Semaphore(NUM_PROBERS);
 
 
 	// The main()
@@ -66,15 +67,15 @@ public class BlockManager
 			/*
 			 * The birth of threads
 			 */
-			AcquireBlock ab1 = new AcquireBlock();
-			AcquireBlock ab2 = new AcquireBlock();
-			AcquireBlock ab3 = new AcquireBlock();
+			AcquireBlock consumer1 = new AcquireBlock();
+			AcquireBlock consumer2 = new AcquireBlock();
+			AcquireBlock consumer3 = new AcquireBlock();
 
 			System.out.println("main(): Three AcquireBlock threads have been created.");
 
-			ReleaseBlock rb1 = new ReleaseBlock();
-			ReleaseBlock rb2 = new ReleaseBlock();
-			ReleaseBlock rb3 = new ReleaseBlock();
+			ReleaseBlock producer1 = new ReleaseBlock();
+			ReleaseBlock producer2 = new ReleaseBlock();
+			ReleaseBlock producer3 = new ReleaseBlock();
 
 			System.out.println("main(): Three ReleaseBlock threads have been created.");
 
@@ -90,29 +91,40 @@ public class BlockManager
 			/*
 			 * Twist 'em all
 			 */
-			ab1.start();
+
+			consumer1.start();
 			aStackProbers[0].start();
-			rb1.start();
+			producer1.start();
+
 			aStackProbers[1].start();
-			ab2.start();
+
+			consumer2.start();
 			aStackProbers[2].start();
-			rb2.start();
-			ab3.start();
+			producer2.start();
+
+			consumer3.start();
 			aStackProbers[3].start();
-			rb3.start();
+			producer3.start();
 
 			System.out.println("main(): All the threads are ready.");
+
+			System.out.println("value of sephamore = " + phase1.getiValue());
 
 			/*
 			 * Wait by here for all forked threads to die
 			 */
-			ab1.join();
-			ab2.join();
-			ab3.join();
+			consumer1.join();
+			consumer2.join();
+			consumer3.join();
 
-			rb1.join();
-			rb2.join();
-			rb3.join();
+			producer1.join();
+			producer2.join();
+			producer3.join();
+
+			aStackProbers[0].join();
+			aStackProbers[1].join();
+			aStackProbers[2].join();
+			aStackProbers[3].join();
 
 			for(int i = 0; i < NUM_PROBERS; i++)
 				aStackProbers[i].join();
@@ -143,10 +155,11 @@ public class BlockManager
 
 
 	/**
-	 * Inner AcquireBlock thread class.
+	 * Inner AcquireBlock thread class. CONSUMER
 	 */
 	static class AcquireBlock extends BaseThread
 	{
+
 		/**
 		 * A copy of a block returned by pop().  @see BlocStack#pop()
 		 */
@@ -154,14 +167,21 @@ public class BlockManager
 
 		public void run()
 		{
+
+
+
+
 			System.out.println("AcquireBlock thread [TID=" + this.iTID + "] starts executing.");
 
 
 			phase1();
-
+			phase1.Signal();
 
 			try
 			{
+				mutex.Wait();
+
+
 				System.out.println("AcquireBlock thread [TID=" + this.iTID + "] requests Ms block.");
 
 				this.cCopy = soStack.pop();
@@ -190,17 +210,24 @@ public class BlockManager
 				reportException(e);
 				System.exit(1);
 			}
+			mutex.Signal();
 
+
+
+
+			phase1.Wait();
 			phase2();
-
+			phase1.Signal();
 
 			System.out.println("AcquireBlock thread [TID=" + this.iTID + "] terminates.");
+
+
 		}
 	} // class AcquireBlock
 
 
 	/**
-	 * Inner class ReleaseBlock.
+	 * Inner class ReleaseBlock. PRODUCER
 	 */
 	static class ReleaseBlock extends BaseThread
 	{
@@ -211,15 +238,20 @@ public class BlockManager
 
 		public void run()
 		{
+
+
+
 			System.out.println("ReleaseBlock thread [TID=" + this.iTID + "] starts executing.");
 
 
 			phase1();
-
+			phase1.Signal();
 
 			try
 			{
-				if(soStack.isEmpty() == false)
+				mutex.Wait();
+
+				if(!soStack.isEmpty())
 					this.cBlock = (char)(soStack.pick() + 1);
 
 
@@ -228,9 +260,16 @@ public class BlockManager
 					"ReleaseBlock thread [TID=" + this.iTID + "] returns Ms block " + this.cBlock +
 					" to position " + (soStack.getITop() + 1) + "."
 				);
-
-				soStack.push(this.cBlock);
-
+				try {
+					soStack.push(this.cBlock);
+				}
+				catch(emptyStackException e)
+				{
+					System.out.println("Stack is EMPTY replacing top with 'a'");
+				}catch(fullStackException e)
+				{
+					System.out.println("stack is FULL, abandoning task");
+				}
 				System.out.println
 				(
 					"Rel[TID=" + this.iTID + "]: Current value of top = " +
@@ -248,13 +287,23 @@ public class BlockManager
 				reportException(e);
 				System.exit(1);
 			}
+			mutex.Signal();
 
 
+
+
+			phase1.Wait();
 			phase2();
-
+			phase1.Signal();
 
 			System.out.println("ReleaseBlock thread [TID=" + this.iTID + "] terminates.");
+
+
+
 		}
+
+
+
 	} // class ReleaseBlock
 
 
@@ -265,16 +314,22 @@ public class BlockManager
 	{
 		public void run()
 		{
+
+
+
 			phase1();
+			phase1.Signal();
 
 
 			try
 			{
+				mutex.Wait();
+
 				for(int i = 0; i < siThreadSteps; i++)
 				{
 					System.out.print("Stack Prober [TID=" + this.iTID + "]: Stack state: ");
 
-					// [s] - means ordinay slot of a stack
+					// [s] - means ordinary slot of a stack
 					// (s) - current top of the stack
 					for(int s = 0; s < soStack.getISize(); s++)
 						System.out.print
@@ -293,9 +348,15 @@ public class BlockManager
 				reportException(e);
 				System.exit(1);
 			}
+			mutex.Signal();
 
 
+
+
+			phase1.Wait();
 			phase2();
+			phase1.Signal();
+
 
 		}
 	} // class CharStackProber
