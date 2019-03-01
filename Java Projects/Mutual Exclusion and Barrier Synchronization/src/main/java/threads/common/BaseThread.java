@@ -22,7 +22,7 @@ public class BaseThread extends Thread
 	 * Data members
 	 * ------------
 	 */
-
+		private static int numberOfPhase1 = 0;
 	/**
 	 * Preserves value across all instances.
 	 */
@@ -105,6 +105,7 @@ public class BaseThread extends Thread
 	 */
 	protected synchronized void phase1()
 	{
+
 		System.out.println(this.getClass().getName() + " thread [TID=" + this.iTID + "] starts PHASE I.");
 
 		System.out.println
@@ -117,6 +118,7 @@ public class BaseThread extends Thread
 		);
 
 		System.out.println(this.getClass().getName() + " thread [TID=" + this.iTID + "] finishes PHASE I.");
+
 	}
 
 	/**
@@ -125,6 +127,12 @@ public class BaseThread extends Thread
 	 */
 	protected synchronized void phase2()
 	{
+		if(numberOfPhase1 == 0)
+		{
+			System.out.println("\nALL OF PHASE 1 HAVE BEEN COMPLETED!!\n");
+			numberOfPhase1++;
+		}
+		numberOfPhase1++;
 		System.out.println(this.getClass().getName() + " thread [TID=" + this.iTID + "] starts PHASE II.");
 
 		System.out.println
@@ -155,7 +163,7 @@ public class BaseThread extends Thread
 		if(siTurn == this.iTID)
 		{
 			// set siTurn = siTurn +/- 1;
-			if(pcIncreasingOrder == true)
+			if(pcIncreasingOrder)
 				siTurn++;
 			else
 				siTurn--;

@@ -50,7 +50,7 @@ public class BlockManager
 	 * phase2 is for use in conjunction with Thread.turnTestAndSet() for phase II proceed
 	 * in the thread creation order
 	 */
-	private static Semaphore phase2 = new Semaphore(NUM_PROBERS);
+	private static Semaphore phase2 = new Semaphore(1);
 
 
 	// The main()
@@ -121,10 +121,10 @@ public class BlockManager
 			producer2.join();
 			producer3.join();
 
-			aStackProbers[0].join();
-			aStackProbers[1].join();
-			aStackProbers[2].join();
-			aStackProbers[3].join();
+//			aStackProbers[0].join();
+//			aStackProbers[1].join();
+//			aStackProbers[2].join();
+//			aStackProbers[3].join();
 
 			for(int i = 0; i < NUM_PROBERS; i++)
 				aStackProbers[i].join();
@@ -167,19 +167,23 @@ public class BlockManager
 
 		public void run()
 		{
-
+			mutex.Wait(); //start of the critical section where its either pushing popping or something else
 
 
 
 			System.out.println("AcquireBlock thread [TID=" + this.iTID + "] starts executing.");
 
-
+			/**
+			 * phase does not need a semaphore before it because it needs to begin before phase 2
+			 * and all of phase 1 needs to end before phase 2 can start
+			 * so phase 1 does not need to be locked
+			 */
 			phase1();
-			phase1.Signal();
+
 
 			try
 			{
-				mutex.Wait();
+
 
 
 				System.out.println("AcquireBlock thread [TID=" + this.iTID + "] requests Ms block.");
@@ -210,14 +214,39 @@ public class BlockManager
 				reportException(e);
 				System.exit(1);
 			}
+			/**
+			 * end the critical section.
+			 * Must be before phase simply because phase 2 and 1 needs to be mutually exclusive.
+			 * If I put them in the same locked block then phase 2 has to finish before any other phase 1 can start which we don't want
+			 */
 			mutex.Signal();
 
+			phase1.Signal();// when phase 1 ends, it will signal and increment the phase1 semaphore until it reaches 1. Only then can phase 2 start
 
 
+			phase1.Wait();  // this is to prevent phase 2 to start before phase 1
+			phase1.Signal(); // I put it here so that phase 2 does not execute independently, rather it will contact switch between all if phase 2 so the task 5 can be accomplished
 
-			phase1.Wait();
+			phase2.Wait();//each phase 2 be mutually exclusive
+
+			/**
+			 * This is where the phase id is lower than the other
+			 * and wait until the lower id execute
+			 */
+			while(!turnTestAndSet())
+			{
+				phase2.Signal();
+				phase2.Wait();
+			}
 			phase2();
-			phase1.Signal();
+
+			phase2.Signal(); //end of phase 2 mutually exclusion
+
+			/**
+			 * every semaphore is repeated for the other critical, phase 1 and 2.
+			 * i.e. for ReleaseBlock and CharStackProber
+			 */
+
 
 			System.out.println("AcquireBlock thread [TID=" + this.iTID + "] terminates.");
 
@@ -238,18 +267,18 @@ public class BlockManager
 
 		public void run()
 		{
-
+			mutex.Wait();
 
 
 			System.out.println("ReleaseBlock thread [TID=" + this.iTID + "] starts executing.");
 
 
 			phase1();
-			phase1.Signal();
+
 
 			try
 			{
-				mutex.Wait();
+
 
 				if(!soStack.isEmpty())
 					this.cBlock = (char)(soStack.pick() + 1);
@@ -288,13 +317,26 @@ public class BlockManager
 				System.exit(1);
 			}
 			mutex.Signal();
-
-
-
-
-			phase1.Wait();
-			phase2();
 			phase1.Signal();
+
+
+
+			phase1.Wait();//wait for all the phase1 and/or wait for another phase2 to finish
+			phase1.Signal();
+
+			phase2.Wait();
+
+			while(!turnTestAndSet())
+			{
+				phase2.Signal();
+				phase2.Wait();
+			}
+
+			phase2();
+
+
+			phase2.Signal();
+
 
 			System.out.println("ReleaseBlock thread [TID=" + this.iTID + "] terminates.");
 
@@ -314,16 +356,16 @@ public class BlockManager
 	{
 		public void run()
 		{
-
+			mutex.Wait();
 
 
 			phase1();
-			phase1.Signal();
+
 
 
 			try
 			{
-				mutex.Wait();
+
 
 				for(int i = 0; i < siThreadSteps; i++)
 				{
@@ -349,13 +391,25 @@ public class BlockManager
 				System.exit(1);
 			}
 			mutex.Signal();
-
+			phase1.Signal();
 
 
 
 			phase1.Wait();
-			phase2();
 			phase1.Signal();
+
+			phase2.Wait();
+
+			while(!turnTestAndSet())
+			{
+				phase2.Signal();
+				phase2.Wait();
+			}
+
+			phase2();
+
+			phase2.Signal();
+
 
 
 		}
