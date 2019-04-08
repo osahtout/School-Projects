@@ -1,4 +1,4 @@
-package common;
+package com.dinningPhilo.common;
 
 import java.util.Random;
 
@@ -155,6 +155,9 @@ public class BaseThread extends Thread
 
 		return false;
 	}
+
+
+
 
 	/**
 	 * Always assumes the increasing order

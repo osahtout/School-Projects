@@ -1,8 +1,9 @@
 package com.dinningPhilo;
 
-import common.BaseThread;
+import com.dinningPhilo.common.BaseThread;
 
-import java.time.Year;
+
+
 
 /**
  * Class Philosopher.
@@ -65,7 +66,25 @@ public class Philosopher extends BaseThread
 
 		}catch (InterruptedException e)
 		{
-			System.err.println("Philosopher.eat():");
+			System.err.println("Philosopher.think():");
+			DiningPhilosophers.reportException(e);
+			System.exit(1);
+		}
+	}
+
+	public void sleep()
+	{
+		// ...
+		try {
+			System.out.println(iTID + " Philosopher has started SLEEPING");
+			yield();
+			sleep((long) (Math.random() * TIME_TO_WASTE));
+			yield();
+			System.out.println(iTID + " Philosopher has finished SLEEPING");
+
+		}catch (InterruptedException e)
+		{
+			System.err.println("Philosopher.sleep():");
 			DiningPhilosophers.reportException(e);
 			System.exit(1);
 		}
@@ -102,24 +121,47 @@ public class Philosopher extends BaseThread
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-
+            turnTestAndSet(); //this should set the priority although I'm not sure how the priority should be implemented
 			eat();
 
 			DiningPhilosophers.soMonitor.putDown(getTID());
 
 			think();
 
+
+			try{
+
+				DiningPhilosophers.soMonitor.requestTalk(getTID());
+
+			}catch (InterruptedException e){
+				e.printStackTrace();
+			}
+
+
 			/*
 			 * TODO:
 			 * A decision is made at random whether this particular
 			 * philosopher is about to say something terribly useful.
 			 */
-			if(!false)
+			if(DiningPhilosophers.soMonitor.currentlyTalking == getTID())
 			{
 				// Some monitor ops down here...
 				talk();
+				DiningPhilosophers.soMonitor.endTalk(getTID());
 				// ...
 			}
+
+			try {
+				DiningPhilosophers.soMonitor.requestSleep(getTID());
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			sleep();
+
+			DiningPhilosophers.soMonitor.endSleep(getTID());
+
+
 
 			yield();
 		}
@@ -146,6 +188,11 @@ public class Philosopher extends BaseThread
 			astrPhrases[(int)(Math.random() * astrPhrases.length)]
 		);
 	}
+
+
+
+
+
 }
 
 // EOF

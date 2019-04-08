@@ -1,6 +1,7 @@
 package com.dinningPhilo;
 
 
+
 /**
  * Class DiningPhilosophers
  * The main starter.
@@ -44,12 +45,26 @@ public class DiningPhilosophers
 	{
 		try
 		{
+			int iPhilosophers;
+			iPhilosophers = DEFAULT_NUMBER_OF_PHILOSOPHERS;
 			/*
 			 * TODO:
 			 * Should be settable from the command line
 			 * or the default if no arguments supplied.
 			 */
-			int iPhilosophers = DEFAULT_NUMBER_OF_PHILOSOPHERS;
+			try {
+			if (argv.length > 0) {
+
+				iPhilosophers = Integer.parseInt(argv[0]);
+			}
+
+			}catch (NegativeArraySizeException e)
+			{
+				System.out.println("You can't have negative numbers of philoso");
+				System.exit(0);
+			}
+
+			System.out.println("There are "+ DEFAULT_NUMBER_OF_PHILOSOPHERS+" philosophers at the table");
 
 			// Make the monitor aware of how many philosophers there are
 			soMonitor = new Monitor(iPhilosophers);
