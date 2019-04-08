@@ -123,6 +123,14 @@ public class Philosopher extends BaseThread
 			}
             turnTestAndSet(); //this should set the priority although I'm not sure how the priority should be implemented
 			eat();
+			try {
+				DiningPhilosophers.soMonitor.requestPepper(getTID());
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+
+				DiningPhilosophers.soMonitor.endPeppers(getTID());
 
 			DiningPhilosophers.soMonitor.putDown(getTID());
 
